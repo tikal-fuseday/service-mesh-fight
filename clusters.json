@@ -1,0 +1,8 @@
+{
+  "ms-at-scale.tikal.io": {
+	"bombServiceUrl": "http://localhost:4000"
+  },
+  "scaling-io.tikal.io": {
+	"bombServiceUrl": "http://localhost:4000"
+  }
+}
