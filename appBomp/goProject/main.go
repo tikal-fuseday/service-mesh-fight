@@ -64,6 +64,7 @@ func params(w http.ResponseWriter, r *http.Request) {
 }
 
 func startSending1(w http.ResponseWriter, r *http.Request) {
+	println("============= startSending1 ==========================")
 	w.Header().Set("Content-Type", "application/json")
 	timeInSeconds := -1
 	var err error
@@ -94,14 +95,16 @@ func startSending1(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(fmt.Sprintf(`{"timeInSeconds": %d, "concurrentThreads": %d, " OK" }`, timeInSeconds, concurrentThreads)))
 }
 
-
 func findStatus(w http.ResponseWriter, r *http.Request) {
+	println("============= findStatus ==========================")
+
 	w.Header().Set("Content-Type", "application/json")
 	bombId := -1
 	var err error
 
 	pathParams := mux.Vars(r)
 	if val, ok := pathParams["bombId"]; ok {
+		println(val)
 		bombId, err = strconv.Atoi(val)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -114,14 +117,16 @@ func findStatus(w http.ResponseWriter, r *http.Request) {
 
 	// TODO here: retrieve data of this bombId
 
-// {status: 'running' | 'done', completed: Number(between 0 to 1), grafanaUrl: string}
-	//responseBody := fmt.Sprintf(`{status: "running", completed: 0.3, grafanaUrl: "http://www.tikalk.com"}: %d, "concurrentThreads": %d, " OK" }`, timeInSeconds, concurrentThreads)
-	responseBody := fmt.Sprintf(`{"status": "%s", "completed": %d, "grafanaUrl": "%s"}`, "running", 0.3, "http://www.tikalk.com")
+	// {status: 'running' | 'done', completed: Number(between 0 to 1), grafanaUrl: string}
+	status := "running"
+	completedPercent := 0.5
+	grafanaUrl := "http://www.tikalk.com"
 
+	//responseBody := fmt.Sprintf(`{status: "running", completed: 0.3, grafanaUrl: "http://www.tikalk.com"}: %d, "concurrentThreads": %d, " OK" }`, timeInSeconds, concurrentThreads)
+	responseBody := fmt.Sprintf(`{"status": "%s", "completed": %f, "grafanaUrl": "%s"}`, status, completedPercent, grafanaUrl)
 
 	w.Write([]byte(responseBody))
 }
-
 
 func startSending2(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
@@ -165,13 +170,13 @@ func main() {
 	r := mux.NewRouter()
 
 	api := r.PathPrefix("/api/v1").Subrouter()
-	api.HandleFunc("", get).Methods(http.MethodGet)
-	api.HandleFunc("", post).Methods(http.MethodPost)
-	api.HandleFunc("", put).Methods(http.MethodPut)
-	api.HandleFunc("", delete).Methods(http.MethodDelete)
+	//api.HandleFunc("", get).Methods(http.MethodGet)
+	//api.HandleFunc("", post).Methods(http.MethodPost)
+	//api.HandleFunc("", put).Methods(http.MethodPut)
+	//api.HandleFunc("", delete).Methods(http.MethodDelete)
 
-	api.HandleFunc("/user/{userID}/comment/{commentID}", params).Methods(http.MethodGet)
-	api.HandleFunc("/bomb/{timeInSeconds}/{concurrentThreads}", startSending1).Methods(http.MethodGet)
+	//api.HandleFunc("/user/{userID}/comment/{commentID}", params).Methods(http.MethodGet)
+	//api.HandleFunc("/bomb/{timeInSeconds}/{concurrentThreads}", startSending1).Methods(http.MethodGet)
 	api.HandleFunc("/bomb/{timeInSeconds}/{concurrentThreads}", startSending1).Methods(http.MethodPost)
 	api.HandleFunc("/bomb/{bombId}/status", findStatus).Methods(http.MethodGet) // ?timeInSeconds=3&concurrentThreads=4
 
