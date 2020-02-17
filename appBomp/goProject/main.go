@@ -92,6 +92,8 @@ func startSending1(w http.ResponseWriter, r *http.Request) {
 	timeInSeconds = timeInSeconds + 1
 	concurrentThreads = concurrentThreads + 1
 
+	go startSendingRequests(timeInSeconds, concurrentThreads)
+
 	w.Write([]byte(fmt.Sprintf(`{"timeInSeconds": %d, "concurrentThreads": %d, " OK" }`, timeInSeconds, concurrentThreads)))
 }
 
@@ -126,25 +128,6 @@ func findStatus(w http.ResponseWriter, r *http.Request) {
 	responseBody := fmt.Sprintf(`{"status": "%s", "completed": %f, "grafanaUrl": "%s"}`, status, completedPercent, grafanaUrl)
 
 	w.Write([]byte(responseBody))
-}
-
-func startSending2(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	//timeInSeconds = 60
-	//concurrentThreads := 1
-	query := r.URL.Query()
-	timeInSeconds, ok1 := strconv.Atoi(query.Get("timeInSeconds"))
-	concurrentThreads, ok2 := strconv.Atoi(query.Get("concurrentThreads"))
-
-	println(ok1)
-	println(ok2)
-	println(timeInSeconds)
-	println(concurrentThreads)
-
-	go startSendingRequests(timeInSeconds, concurrentThreads)
-
-	w.Write([]byte(fmt.Sprintf(`{"timeInSeconds": %d, "concurrentThreads": %d, " OK" }`, timeInSeconds, concurrentThreads)))
-
 }
 
 func startSendingRequests(timeInSeconds int, concurrentThreads int) {
