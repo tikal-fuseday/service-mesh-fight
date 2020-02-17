@@ -3,7 +3,8 @@ import {computed} from '@vue/composition-api';
 import axios from 'axios'
 
 const clustersState = Vue.observable({
-	clusters: []
+	clusters: [],
+	currentCluster: null
 });
 
 function fetchClusters() {
@@ -12,9 +13,18 @@ function fetchClusters() {
 	});
 }
 
+
+function fetchCluster(clusterName) {
+	return axios.get('/api/clusters/' + clusterName).then(res => {
+		clustersState.currentCluster = res.data;
+	});
+}
+
 export function useClusters() {
 	return {
 		fetchClusters,
-		clusters: computed(() => clustersState.clusters)
+		fetchCluster,
+		clusters: computed(() => clustersState.clusters),
+		currentCluster: computed(() => clustersState.currentCluster),
 	}
 }

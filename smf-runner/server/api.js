@@ -9,6 +9,15 @@ module.exports = function (app) {
 		res.status(200).json(clusters);
 	});
 
+	app.get("/api/clusters/:clusterName", async function (req, res) {
+		const cluster = clusters[req.params.clusterName];
+		if (!cluster) {
+			res.status(401).json({message: 'cluster does not exist'});
+			return;
+		}
+		res.status(200).json(cluster);
+	});
+
 	app.post("/api/apply", async function (req, res) {
 		const body = req.body || {};
 		if (!(body.clusterName && body.namespace && body.deploymentFilePath)) {
@@ -32,7 +41,7 @@ module.exports = function (app) {
 		}
 
 		const timeInSeconds = 60 * 60;
-		const concurrentThreads = req.body.parallels || 10;
+		const concurrentThreads = req.body.parallels || 100;
 
 		axios(
 			`${cluster.bombServiceUrl}/api/bomb/${timeInSeconds}/${concurrentThreads}}`,

@@ -6,13 +6,14 @@ const STORAGE_KEY = 'smf_bomb';
 
 export const bomb = Vue.observable(localStorage.getItem(STORAGE_KEY) ? JSON.parse(localStorage.getItem(STORAGE_KEY)) : {
 	clusterName: '',
-	parallels: 10,
+	parallels: 100,
 	bombId: '',
 	status: '',
-	completed: 0
+	completed: 0,
+	requests: 0,
 });
 
-export function createBomb(clusterName, testUrl, parallels = 10) {
+export function createBomb(clusterName, testUrl, parallels = 100) {
 	bomb.clusterName = clusterName;
 	bomb.parallels = parallels;
 	localStorage.setItem(STORAGE_KEY, JSON.stringify(bomb));
@@ -35,7 +36,7 @@ export function checkBomb() {
 		.then(({status, completed}) => {
 			bomb.status = status;
 			bomb.completed = completed;
-
+			localStorage.setItem(STORAGE_KEY, JSON.stringify(bomb));
 			setTimeout(checkBomb, 2000);
 		});
 }

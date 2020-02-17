@@ -3,7 +3,7 @@
 	"bombServiceUrl": "http://bomb.ddns.net:30001"
   },
   "scaling-io.tikal.io": {
-	"bombServiceUrl": "http://localhost:4000",
+	"bombServiceUrl": "http://bomb.ddns.net:30001",
 	"istio-grafana": "http://istio.ddns.net:3000",
 	"linkerd-grafana": "http://linkerd.ddns.net:8084/grafana"
   }
