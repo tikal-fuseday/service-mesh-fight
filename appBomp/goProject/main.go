@@ -111,12 +111,14 @@ func findStatus(w http.ResponseWriter, r *http.Request) {
 
 	// TODO here: retrieve data of this bombId
 
+	status := "running"
+
 	percentNow := percent
-	if percentNow > 1.0 {
+	if percentNow >= 1.0 {
+		status = "done"
 		percentNow = 1.0
 	}
 
-	status := "running"
 	completedPercent := percentNow
 	grafanaUrl := "http://www.tikalk.com"
 
