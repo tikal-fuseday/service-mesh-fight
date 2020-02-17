@@ -15,46 +15,47 @@ module.exports = function (app) {
 			res.status(401).json({message: 'missing arguments'});
 			return;
 		}
-		await applyDeployment(body);
+		await applyDeployment(body.clusterName, body.namespace, body.deploymentFilePath);
 		res.status(200).json({status: 'success'});
 	});
 
-	app.post("/api/bomb", async function (req, res) {
-		const cluster = clusters[req.body.clusterName];
-		if(!cluster) {
-			res.status(401).json({message: 'cluster name does not exist'});
+	app.post("/api/bomb/:clusterName", async function (req, res) {
+		const cluster = clusters[req.params.clusterName];
+		const url = req.body.url;
+		if (!cluster) {
+			res.status(401).json({message: 'cluster does not exist'});
+			return;
+		}
+		if (!url) {
+			res.status(401).json({message: 'please provide a url to test'});
 			return;
 		}
 
-		axios(`${cluster.bombServiceUrl}/api/bomb`, {
-			method: 'POST',
-			body: {
-				time: 1000 * 60 * 60,
-				parallels: req.body.parallels || 10
-			}
-		}).then(({data}) => {
-			// should be {bombId: number}
-			res.status(200).json(data);
-		});
+		const timeInSeconds = 60 * 60;
+		const concurrentThreads = req.body.parallels || 10;
+
+		axios(
+			`${cluster.bombServiceUrl}/api/bomb/${timeInSeconds}/${concurrentThreads}}`,
+			{method: 'POST', params: {url}})
+			.then(({data}) => {
+				// should be {bombId: number}
+				res.status(200).json(data);
+			});
 	});
 
-	app.post("/api/bomb/:bombId/status", async function (req, res) {
-		const cluster = clusters[req.body.clusterName];
-		if(!cluster) {
-			res.status(401).json({message: 'cluster name does not exist'});
+	app.get("/api/bomb/:clusterName/:bombId/status", async function (req, res) {
+		const cluster = clusters[req.params.clusterName];
+		if (!cluster) {
+			res.status(401).json({message: 'cluster does not exist'});
 			return;
 		}
 
-		axios(`${cluster.bombServiceUrl}/api/bomb/${req.params.bombId}/status`, {
-			method: 'POST',
-			body: {
-				time: 1000 * 60 * 60,
-				parallels: req.body.parallels || 10
-			}
-		}).then(({data}) => {
-			// should be {bombId: number}
-			res.status(200).json(data);
-		});
+		axios.get(`${cluster.bombServiceUrl}/api/bomb/${req.params.bombId}/status`)
+			.then(({data}) => {
+				// should be:
+				// {status: 'running' | 'done', completed: Number(between 0 to 1)}
+				res.status(200).json(data);
+			});
 	});
 
 };

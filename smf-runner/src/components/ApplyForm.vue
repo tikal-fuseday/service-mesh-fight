@@ -1,12 +1,18 @@
 <template>
-	<form @submit="apply">
+	<form @submit.prevent="apply">
 		<label>
 			Cluster:
-			<input v-model="deployment.clusterName" type="text"/>
+			<select v-model="deployment.clusterName">
+				<option v-for="cluster of clusters" :key="cluster" :value="cluster">{{cluster}}</option>
+			</select>
 		</label>
 		<label>
 			Namespace:
 			<input v-model="deployment.namespace" type="text"/>
+		</label>
+		<label>
+			Test Url:
+			<input v-model="deployment.testUrl" type="text"/>
 		</label>
 		<label>
 			Deployment File Path:
@@ -20,28 +26,28 @@
 			</label>
 		</div>
 		<div class="btn-group">
-			<button>Apply, bitch.</button>
+			<LoadSpinner v-if="deployment.loading" />
+			<button v-else>Apply, bitch.</button>
 		</div>
 	</form>
 </template>
 <script>
-	import {createComponent, reactive} from "@vue/composition-api";
+	import {createComponent} from "@vue/composition-api";
+	import {useDeployment} from '../compositions/deployment';
+	import {useClusters} from '../compositions/clusters';
+	import LoadSpinner from './LoadSpinner';
 
 	export default createComponent({
+		components: {
+			LoadSpinner,
+		},
 		setup() {
-			const deployment = reactive({
-				clusterName: "",
-				namespace: 'istio',
-				deploymentFilePath: "",
-				plugins: ["istio", "linkrd"]
-			});
+			const {clusters, fetchClusters} = useClusters();
+			fetchClusters();
 			return {
-				deployment,
-				plugins: ["istio", "linkrd"],
-				apply() {
-					alert("submit");
-				}
-			};
+				clusters,
+				...useDeployment()
+			}
 		}
 	});
 </script>
@@ -66,16 +72,17 @@
 		padding: 10px;
 	}
 
-	input[type="text"] {
+	input[type="text"], select {
 		margin: 5px 0;
 		display: block;
 		padding: 5px;
 		transition: outline-width 0.3s ease-in-out;
 		outline: 0;
 		width: 100%;
+		font-size: 22px;
 	}
 
-	input[type="text"]:focus {
+	input[type="text"]:focus, select:focus {
 		outline: solid 2px #ccc;
 	}
 
@@ -86,7 +93,10 @@
 	}
 
 	.btn-group {
-		text-align: center;
+		width: 100%;
+		display: flex;
+		justify-content: center;
+		align-items: center;
 	}
 
 	button {
