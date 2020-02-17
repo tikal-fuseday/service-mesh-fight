@@ -5,6 +5,10 @@
 			<input v-model="deployment.clusterName" type="text"/>
 		</label>
 		<label>
+			Namespace:
+			<input v-model="deployment.namespace" type="text"/>
+		</label>
+		<label>
 			Deployment File Path:
 			<input v-model="deployment.deploymentFilePath" type="text"/>
 		</label>
@@ -27,6 +31,7 @@
 		setup() {
 			const deployment = reactive({
 				clusterName: "",
+				namespace: 'istio',
 				deploymentFilePath: "",
 				plugins: ["istio", "linkrd"]
 			});
