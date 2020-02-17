@@ -123,7 +123,7 @@ func findStatus(w http.ResponseWriter, r *http.Request) {
 func startSendingRequests(timeInSeconds int, concurrentThreads int, urlEncoded string) {
 	println("Starting ", timeInSeconds, " seconds of requests on ", concurrentThreads, " concurrent threads ...")
 
-	if (concurrentThreads > 10) || (concurrentThreads < 1) {
+	if (concurrentThreads > 200) || (concurrentThreads < 1) {
 		println("change concurrentThreads from ", concurrentThreads, " to 1")
 		concurrentThreads = 1
 	}
