@@ -111,8 +111,10 @@ func findStatus(w http.ResponseWriter, r *http.Request) {
 
 	// TODO here: retrieve data of this bombId
 
+	percent := float32(countOK) / 1000.0
+
 	status := "running"
-	completedPercent := 0.5
+	completedPercent := percent
 	grafanaUrl := "http://www.tikalk.com"
 
 	responseBody := fmt.Sprintf(`{"status": "%s", "completed": %f, "grafanaUrl": "%s"}`, status, completedPercent, grafanaUrl)
@@ -128,28 +130,56 @@ func startSendingRequests(timeInSeconds int, concurrentThreads int, urlEncoded s
 		concurrentThreads = 1
 	}
 
+	responses := make(chan job, 1000)
+	go aggregateStatus(responses)
 	for i := 0; i < concurrentThreads; i++ {
-		go sendManyRequests(i, timeInSeconds, urlEncoded)
+		go sendManyRequests(i, timeInSeconds, urlEncoded, responses)
 	}
 
 	println("completed!")
 }
 
-func sendManyRequests(threadNumber int, timeInSeconds int, urlEncoded string) {
-	currentTime := time.Now().Unix()
-	fmt.Printf("currentTime = %v\n", currentTime)
+var countOK int64
+var countErr int64
+var percent float32
 
-	runUntil := currentTime + int64(timeInSeconds)
+func aggregateStatus(statusCodes chan job) {
+	for j := range statusCodes {
+		percent = j.percent
+		if j.statusCode == 200 {
+			countOK = countOK + 1
+		} else {
+			countErr++
+		}
+	}
+}
+
+type Pair struct {
+	a, b interface{}
+}
+type job struct {
+	statusCode int
+	percent    float32
+}
+
+func sendManyRequests(threadNumber int, timeInSeconds int, urlEncoded string, responses chan job) {
+	startTime := time.Now().Unix()
+	fmt.Printf("currentTime = %v\n", startTime)
+
+	runUntil := startTime + int64(timeInSeconds)
 	fmt.Printf("runUntil = %v\n", runUntil)
 	for {
-		work(threadNumber, urlEncoded)
+		statusCode := work(threadNumber, urlEncoded)
+		current := 100 * (time.Now().Unix() - startTime) / int64(timeInSeconds)
+		responses <- job{statusCode, float32(current)}
+		//responses<-Pair{statusCode, current}
 		if time.Now().Unix() > runUntil {
 			break
 		}
 	}
 }
 
-func work(threadNumber int, urlEncoded string) {
+func work(threadNumber int, urlEncoded string) int {
 	println("[thread ", threadNumber, "] send ", urlEncoded, "  ")
 	resp, err := http.Get(urlEncoded)
 	if err != nil {
@@ -158,6 +188,8 @@ func work(threadNumber int, urlEncoded string) {
 	defer resp.Body.Close()
 
 	fmt.Println("Response status:", resp.Status)
+
+	return resp.StatusCode
 }
 
 func busyWait() {
@@ -181,5 +213,5 @@ func main() {
 	api.HandleFunc("/bomb/{timeInSeconds}/{concurrentThreads}", startSending1).Methods(http.MethodPost) // + ?url=http://www.google.com
 	api.HandleFunc("/bomb/{bombId}/status", findStatus).Methods(http.MethodGet)                         // ?timeInSeconds=3&concurrentThreads=4
 
-	log.Fatal(http.ListenAndServe(":8080", r))
+	log.Fatal(http.ListenAndServe(":30001", r))
 }
