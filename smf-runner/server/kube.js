@@ -1,7 +1,10 @@
 const {exec} = require("child_process");
+const clusters = require('../../clusters');
+
 
 function getClusters() {
-	return new Promise((resolve, reject) => {
+	return Promise.resolve(Object.keys(clusters));
+	/*return new Promise((resolve, reject) => {
 		exec("kubectl config get-contexts -o=name", function (err, data) {
 			if (err) {
 				reject(err);
@@ -14,7 +17,7 @@ function getClusters() {
 					.filter(Boolean)
 			);
 		});
-	});
+	});*/
 }
 
 function useKubeCluster(clusterName) {
