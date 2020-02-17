@@ -1,8 +1,8 @@
 <template>
 	<div>
 		<template v-if="cluster">
-			<iframe :src="cluster['istio-grafana']"></iframe>
-			<iframe :src="cluster['linkerd-grafana']"></iframe>
+			<a :href="cluster['istio-grafana']" target="_blank">istio stats</a>
+			<a :href="cluster['linkerd-grafana']" target="_blank">linkerd stats</a>
 		</template>
 	</div>
 </template>
@@ -25,7 +25,12 @@
 </script>
 <style scoped>
 	div {
-		display: flex;
-		flex-direction: column;
+		text-align: center;
+	}
+
+	a {
+		color: black;
+		font-size: 22px;
+		padding: 0 10px;
 	}
 </style>
