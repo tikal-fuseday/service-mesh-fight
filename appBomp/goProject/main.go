@@ -123,44 +123,34 @@ func findStatus(w http.ResponseWriter, r *http.Request) {
 func startSendingRequests(timeInSeconds int, concurrentThreads int, urlEncoded string) {
 	println("Starting ", timeInSeconds, " seconds of requests on ", concurrentThreads, " concurrent threads ...")
 
-	//resp, err := http.Get(PRODUCT_PAGE_URL)
-	//if err != nil {
-	//	panic(err)
-	//}
-	//defer resp.Body.Close()
-	//
-	//fmt.Println("Response status:", resp.Status)
-	//
-	//scanner := bufio.NewScanner(resp.Body)
-	//for i := 0; scanner.Scan() && i < 5; i++ {
-	//	fmt.Println(scanner.Text())
-	//}
+	if (concurrentThreads > 10) || (concurrentThreads < 1) {
+		println("change concurrentThreads from ", concurrentThreads, " to 1")
+		concurrentThreads = 1
+	}
 
-	sendManyRequests(timeInSeconds, urlEncoded)
+	for i := 0; i < concurrentThreads; i++ {
+		go sendManyRequests(i, timeInSeconds, urlEncoded)
+	}
 
-	//busyWait()
 	println("completed!")
 }
 
-func sendManyRequests(timeInSeconds int, urlEncoded string) {
+func sendManyRequests(threadNumber int, timeInSeconds int, urlEncoded string) {
 	currentTime := time.Now().Unix()
-	//println("currentTime=", currentTime.Second())
 	fmt.Printf("currentTime = %v\n", currentTime)
 
 	runUntil := currentTime + int64(timeInSeconds)
-	//println("runUntil=", runUntil.Second())
 	fmt.Printf("runUntil = %v\n", runUntil)
-	// condition = time.Now().After(runUntil)
 	for {
-		work(urlEncoded)
+		work(threadNumber, urlEncoded)
 		if time.Now().Unix() > runUntil {
 			break
 		}
 	}
 }
 
-func work(urlEncoded string) {
-	print("send ", urlEncoded, "  ")
+func work(threadNumber int, urlEncoded string) {
+	println("[thread ", threadNumber, "] send ", urlEncoded, "  ")
 	resp, err := http.Get(urlEncoded)
 	if err != nil {
 		panic(err)
