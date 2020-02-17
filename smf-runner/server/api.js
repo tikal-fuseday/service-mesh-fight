@@ -43,13 +43,19 @@ module.exports = function (app) {
 		const timeInSeconds = 60 * 60;
 		const concurrentThreads = req.body.parallels || 100;
 
-		axios(
-			`${cluster.bombServiceUrl}/api/bomb/${timeInSeconds}/${concurrentThreads}}`,
-			{method: 'POST', params: {url}})
+		axios.post(
+			`${cluster.bombServiceUrl}/api/v1/bomb/${timeInSeconds}/${concurrentThreads}`,
+			null,
+			{params: {url}}
+		)
 			.then(({data}) => {
 				// should be {bombId: number}
 				res.status(200).json(data);
-			});
+			})
+			.catch(err => {
+				console.log(err);
+				res.status(500).json({message: err.message});
+			})
 	});
 
 	app.get("/api/bomb/:clusterName/:bombId/status", async function (req, res) {
@@ -59,12 +65,16 @@ module.exports = function (app) {
 			return;
 		}
 
-		axios.get(`${cluster.bombServiceUrl}/api/bomb/${req.params.bombId}/status`)
+		axios.get(`${cluster.bombServiceUrl}/api/v1/bomb/${req.params.bombId}/status`)
 			.then(({data}) => {
 				// should be:
 				// {status: 'running' | 'done', completed: Number(between 0 to 1)}
 				res.status(200).json(data);
-			});
+			})
+			.catch(err => {
+				console.log(err);
+				res.status(500).json({message: err.message});
+			})
 	});
 
 };

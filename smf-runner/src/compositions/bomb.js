@@ -1,4 +1,4 @@
-import {reactive} from '@vue/composition-api';
+import {computed, reactive} from '@vue/composition-api';
 import axios from 'axios'
 import Vue from 'vue';
 
@@ -31,11 +31,12 @@ export function checkBomb() {
 	if (!bomb.bombId || !bomb.clusterName) {
 		return;
 	}
-	return axios.post(`/api/bomb/${bomb.clusterName}/${bomb.bombId}`)
+	return axios.get(`/api/bomb/${bomb.clusterName}/${bomb.bombId}/status`)
 		.then(res => res.data)
-		.then(({status, completed}) => {
+		.then(({status, completed, requests}) => {
 			bomb.status = status;
 			bomb.completed = completed;
+			bomb.requests = requests;
 			localStorage.setItem(STORAGE_KEY, JSON.stringify(bomb));
 			setTimeout(checkBomb, 2000);
 		});
@@ -43,6 +44,7 @@ export function checkBomb() {
 
 export function useBomb() {
 	return {
-		bomb: reactive(bomb)
+		bomb: reactive(bomb),
+		completed: computed(() => (bomb.completed).toFixed(2) + '%')
 	}
 }
