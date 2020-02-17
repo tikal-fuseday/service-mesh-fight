@@ -111,13 +111,16 @@ func findStatus(w http.ResponseWriter, r *http.Request) {
 
 	// TODO here: retrieve data of this bombId
 
-	percent := float32(countOK) / 1000.0
+	percentNow := percent
+	if percentNow > 1.0 {
+		percentNow = 1.0
+	}
 
 	status := "running"
-	completedPercent := percent
+	completedPercent := percentNow
 	grafanaUrl := "http://www.tikalk.com"
 
-	responseBody := fmt.Sprintf(`{"status": "%s", "completed": %f, "grafanaUrl": "%s"}`, status, completedPercent, grafanaUrl)
+	responseBody := fmt.Sprintf(`{"status": "%s", "completed": %f, "grafanaUrl": "%s", "requests": %d}`, status, completedPercent, grafanaUrl, countOK)
 
 	w.Write([]byte(responseBody))
 }
@@ -129,9 +132,10 @@ func startSendingRequests(timeInSeconds int, concurrentThreads int, urlEncoded s
 		println("change concurrentThreads from ", concurrentThreads, " to 1")
 		concurrentThreads = 1
 	}
-
-	responses := make(chan job, 1000)
-	go aggregateStatus(responses)
+	countOK = 0
+	countErr = 0
+	responses := make(chan job, 100000)
+	go aggregateStatus(responses, concurrentThreads)
 	for i := 0; i < concurrentThreads; i++ {
 		go sendManyRequests(i, timeInSeconds, urlEncoded, responses)
 	}
@@ -143,8 +147,9 @@ var countOK int64
 var countErr int64
 var percent float32
 
-func aggregateStatus(statusCodes chan job) {
+func aggregateStatus(statusCodes chan job, concurrentThreads int) {
 	for j := range statusCodes {
+		//percent = j.percent 	// * float32(concurrentThreads)
 		percent = j.percent
 		if j.statusCode == 200 {
 			countOK = countOK + 1
@@ -170,8 +175,11 @@ func sendManyRequests(threadNumber int, timeInSeconds int, urlEncoded string, re
 	fmt.Printf("runUntil = %v\n", runUntil)
 	for {
 		statusCode := work(threadNumber, urlEncoded)
-		current := 100 * (time.Now().Unix() - startTime) / int64(timeInSeconds)
-		responses <- job{statusCode, float32(current)}
+		secondsPassed := time.Now().Unix() - startTime
+		secondsRequested := timeInSeconds
+		current := float32(secondsPassed) / float32(secondsRequested)
+		//fmt.Println("seconds Passed:", secondsPassed, ", seconds Requested:", secondsRequested, ", percent=", current)
+		responses <- job{statusCode, current}
 		//responses<-Pair{statusCode, current}
 		if time.Now().Unix() > runUntil {
 			break
@@ -180,25 +188,16 @@ func sendManyRequests(threadNumber int, timeInSeconds int, urlEncoded string, re
 }
 
 func work(threadNumber int, urlEncoded string) int {
-	println("[thread ", threadNumber, "] send ", urlEncoded, "  ")
+	//println("[thread ", threadNumber, "] send ", urlEncoded, "  ")
 	resp, err := http.Get(urlEncoded)
 	if err != nil {
 		panic(err)
 	}
 	defer resp.Body.Close()
 
-	fmt.Println("Response status:", resp.Status)
+	//fmt.Println("Response status:", resp.Status)
 
 	return resp.StatusCode
-}
-
-func busyWait() {
-	for a := 0; a <= 10000-1; a++ {
-		for c := 0; c <= 1000000-1; c++ {
-			b := 0
-			b = b + 1
-		}
-	}
 }
 
 /*******************************
