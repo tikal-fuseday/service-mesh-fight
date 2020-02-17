@@ -1,20 +1,25 @@
 <template>
 	<div id="app">
-		<BombStatus v-if="bomb.bombId"/>
-		<ApplyForm v-else/>
+		<div>
+			<BombStatus v-if="bomb.bombId"/>
+			<ApplyForm v-else/>
+		</div>
+		<Grafanas v-if="bomb.clusterName" :cluster-name="bomb.clusterName"/>
 	</div>
 </template>
 
 <script>
 	import BombStatus from "./components/BombStatus.vue";
 	import ApplyForm from "./components/ApplyForm.vue";
+	import Grafanas from "./components/Grafanas.vue";
 	import {checkBomb, useBomb} from './compositions/bomb';
 
 	export default {
 		name: "App",
 		components: {
 			BombStatus,
-			ApplyForm
+			ApplyForm,
+			Grafanas
 		},
 		setup() {
 			checkBomb();
