@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 const PRODUCT_PAGE_URL = "http://www.google.com"
@@ -71,8 +72,8 @@ func startSending1(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	timeInSeconds = timeInSeconds + 1
-	concurrentThreads = concurrentThreads + 1
+	//timeInSeconds = timeInSeconds + 1
+	//concurrentThreads = concurrentThreads + 1
 
 	go startSendingRequests(timeInSeconds, concurrentThreads)
 
@@ -117,8 +118,46 @@ func findStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func startSendingRequests(timeInSeconds int, concurrentThreads int) {
-	println("Starting ...")
+	println("Starting ", timeInSeconds, " seconds of requests on ", concurrentThreads, " concurrent threads ...")
 
+	//resp, err := http.Get(PRODUCT_PAGE_URL)
+	//if err != nil {
+	//	panic(err)
+	//}
+	//defer resp.Body.Close()
+	//
+	//fmt.Println("Response status:", resp.Status)
+	//
+	//scanner := bufio.NewScanner(resp.Body)
+	//for i := 0; scanner.Scan() && i < 5; i++ {
+	//	fmt.Println(scanner.Text())
+	//}
+
+	sendManyRequests(timeInSeconds)
+
+	//busyWait()
+	println("completed!")
+}
+
+func sendManyRequests(timeInSeconds int) {
+	currentTime := time.Now().Unix()
+	//println("currentTime=", currentTime.Second())
+	fmt.Printf("currentTime = %v\n", currentTime)
+
+	runUntil := currentTime + int64(timeInSeconds)
+	//println("runUntil=", runUntil.Second())
+	fmt.Printf("runUntil = %v\n", runUntil)
+	// condition = time.Now().After(runUntil)
+	for {
+		work()
+		if time.Now().Unix() > runUntil {
+			break
+		}
+	}
+}
+
+func work() {
+	print("send ", PRODUCT_PAGE_URL, "  ")
 	resp, err := http.Get(PRODUCT_PAGE_URL)
 	if err != nil {
 		panic(err)
@@ -126,9 +165,6 @@ func startSendingRequests(timeInSeconds int, concurrentThreads int) {
 	defer resp.Body.Close()
 
 	fmt.Println("Response status:", resp.Status)
-
-	busyWait()
-	println("completed!")
 }
 
 func busyWait() {
