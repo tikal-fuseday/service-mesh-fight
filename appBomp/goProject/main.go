@@ -72,10 +72,13 @@ func startSending1(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	query := r.URL.Query()
+	location := query.Get("url")
+
 	//timeInSeconds = timeInSeconds + 1
 	//concurrentThreads = concurrentThreads + 1
 
-	go startSendingRequests(timeInSeconds, concurrentThreads)
+	go startSendingRequests(timeInSeconds, concurrentThreads, location)
 
 	bombId := 3
 
@@ -117,7 +120,7 @@ func findStatus(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(responseBody))
 }
 
-func startSendingRequests(timeInSeconds int, concurrentThreads int) {
+func startSendingRequests(timeInSeconds int, concurrentThreads int, urlEncoded string) {
 	println("Starting ", timeInSeconds, " seconds of requests on ", concurrentThreads, " concurrent threads ...")
 
 	//resp, err := http.Get(PRODUCT_PAGE_URL)
@@ -133,13 +136,13 @@ func startSendingRequests(timeInSeconds int, concurrentThreads int) {
 	//	fmt.Println(scanner.Text())
 	//}
 
-	sendManyRequests(timeInSeconds)
+	sendManyRequests(timeInSeconds, urlEncoded)
 
 	//busyWait()
 	println("completed!")
 }
 
-func sendManyRequests(timeInSeconds int) {
+func sendManyRequests(timeInSeconds int, urlEncoded string) {
 	currentTime := time.Now().Unix()
 	//println("currentTime=", currentTime.Second())
 	fmt.Printf("currentTime = %v\n", currentTime)
@@ -149,16 +152,16 @@ func sendManyRequests(timeInSeconds int) {
 	fmt.Printf("runUntil = %v\n", runUntil)
 	// condition = time.Now().After(runUntil)
 	for {
-		work()
+		work(urlEncoded)
 		if time.Now().Unix() > runUntil {
 			break
 		}
 	}
 }
 
-func work() {
-	print("send ", PRODUCT_PAGE_URL, "  ")
-	resp, err := http.Get(PRODUCT_PAGE_URL)
+func work(urlEncoded string) {
+	print("send ", urlEncoded, "  ")
+	resp, err := http.Get(urlEncoded)
 	if err != nil {
 		panic(err)
 	}
@@ -185,8 +188,8 @@ func main() {
 
 	api := r.PathPrefix("/api/v1").Subrouter()
 
-	api.HandleFunc("/bomb/{timeInSeconds}/{concurrentThreads}", startSending1).Methods(http.MethodPost)
-	api.HandleFunc("/bomb/{bombId}/status", findStatus).Methods(http.MethodGet) // ?timeInSeconds=3&concurrentThreads=4
+	api.HandleFunc("/bomb/{timeInSeconds}/{concurrentThreads}", startSending1).Methods(http.MethodPost) // + ?url=http://www.google.com
+	api.HandleFunc("/bomb/{bombId}/status", findStatus).Methods(http.MethodGet)                         // ?timeInSeconds=3&concurrentThreads=4
 
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
