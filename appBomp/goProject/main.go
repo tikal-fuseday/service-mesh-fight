@@ -8,29 +8,7 @@ import (
 	"strconv"
 )
 
-func get(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"message": "get called"}`))
-}
-
-func post(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte(`{"message": "post called"}`))
-}
-
-func put(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusAccepted)
-	w.Write([]byte(`{"message": "put called"}`))
-}
-
-func delete(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"message": "delete called"}`))
-}
+const PRODUCT_PAGE_URL = "http://www.google.com"
 
 func params(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
@@ -63,6 +41,10 @@ func params(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(fmt.Sprintf(`{"userID": %d, "commentID": %d, "location": "%s" }`, userID, commentID, location)))
 }
 
+/**
+expected response:
+{"bombId": 123 }
+*/
 func startSending1(w http.ResponseWriter, r *http.Request) {
 	println("============= startSending1 ==========================")
 	w.Header().Set("Content-Type", "application/json")
@@ -94,9 +76,15 @@ func startSending1(w http.ResponseWriter, r *http.Request) {
 
 	go startSendingRequests(timeInSeconds, concurrentThreads)
 
-	w.Write([]byte(fmt.Sprintf(`{"timeInSeconds": %d, "concurrentThreads": %d, " OK" }`, timeInSeconds, concurrentThreads)))
+	bombId := 3
+
+	w.Write([]byte(fmt.Sprintf(`{"bombId": %d }`, bombId)))
 }
 
+/**
+expected response:
+	{status: 'running' | 'done', completed: Number(between 0 to 1), grafanaUrl: string}
+*/
 func findStatus(w http.ResponseWriter, r *http.Request) {
 	println("============= findStatus ==========================")
 
@@ -119,12 +107,10 @@ func findStatus(w http.ResponseWriter, r *http.Request) {
 
 	// TODO here: retrieve data of this bombId
 
-	// {status: 'running' | 'done', completed: Number(between 0 to 1), grafanaUrl: string}
 	status := "running"
 	completedPercent := 0.5
 	grafanaUrl := "http://www.tikalk.com"
 
-	//responseBody := fmt.Sprintf(`{status: "running", completed: 0.3, grafanaUrl: "http://www.tikalk.com"}: %d, "concurrentThreads": %d, " OK" }`, timeInSeconds, concurrentThreads)
 	responseBody := fmt.Sprintf(`{"status": "%s", "completed": %f, "grafanaUrl": "%s"}`, status, completedPercent, grafanaUrl)
 
 	w.Write([]byte(responseBody))
@@ -132,6 +118,15 @@ func findStatus(w http.ResponseWriter, r *http.Request) {
 
 func startSendingRequests(timeInSeconds int, concurrentThreads int) {
 	println("Starting ...")
+
+	resp, err := http.Get(PRODUCT_PAGE_URL)
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+
+	fmt.Println("Response status:", resp.Status)
+
 	busyWait()
 	println("completed!")
 }
@@ -153,13 +148,7 @@ func main() {
 	r := mux.NewRouter()
 
 	api := r.PathPrefix("/api/v1").Subrouter()
-	//api.HandleFunc("", get).Methods(http.MethodGet)
-	//api.HandleFunc("", post).Methods(http.MethodPost)
-	//api.HandleFunc("", put).Methods(http.MethodPut)
-	//api.HandleFunc("", delete).Methods(http.MethodDelete)
 
-	//api.HandleFunc("/user/{userID}/comment/{commentID}", params).Methods(http.MethodGet)
-	//api.HandleFunc("/bomb/{timeInSeconds}/{concurrentThreads}", startSending1).Methods(http.MethodGet)
 	api.HandleFunc("/bomb/{timeInSeconds}/{concurrentThreads}", startSending1).Methods(http.MethodPost)
 	api.HandleFunc("/bomb/{bombId}/status", findStatus).Methods(http.MethodGet) // ?timeInSeconds=3&concurrentThreads=4
 
