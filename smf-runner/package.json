@@ -11,7 +11,7 @@
 	},
 	"dependencies": {
 		"@vue/composition-api": "^0.3.4",
-		"axios": "^0.19.2",
+		"axios": "^0.21.1",
 		"body-parser": "^1.19.0",
 		"core-js": "^3.6.4",
 		"cors": "^2.8.5",
